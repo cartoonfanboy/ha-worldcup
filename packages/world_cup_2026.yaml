@@ -1,0 +1,35 @@
+###############################################################################
+# FIFA World Cup 2026 — Standings & Scoreboard
+# Uses the public ESPN API (no API key required).
+###############################################################################
+
+sensor:
+  # Group stage standings — all 12 groups (A–L)
+  - platform: rest
+    name: "WC Standings"
+    unique_id: wc_standings_espn
+    resource: "https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026"
+    scan_interval: 1800   # update every 30 minutes
+    json_attributes:
+      - children
+    value_template: >
+      {% if value_json.children is defined %}
+        {{ value_json.children | count }} groups
+      {% else %}
+        unavailable
+      {% endif %}
+
+  # Live scoreboard — today's matches
+  - platform: rest
+    name: "WC Scoreboard"
+    unique_id: wc_scoreboard_espn
+    resource: "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+    scan_interval: 120    # update every 2 minutes
+    json_attributes:
+      - events
+    value_template: >
+      {% if value_json.events is defined %}
+        {{ value_json.events | count }} matches today
+      {% else %}
+        0 matches today
+      {% endif %}

@@ -1,0 +1,148 @@
+################################################################################
+# World Cup 2026 — Lovelace View
+#
+# Paste this into your Lovelace raw config editor as a new view,
+# or add it to your lovelace views list in ui-lovelace.yaml.
+#
+# Requirements:
+#   - HACS: teamtracker (custom integration)
+#   - HACS: lovelace-layout-card  (for custom:grid-layout)
+#   - HACS: card-mod              (for custom card styles)
+#   - Sensors from packages/world_cup_2026.yaml
+#   - TeamTracker config entries per team (see README.md)
+################################################################################
+
+title: World Cup
+path: world-cup
+icon: mdi:trophy
+type: custom:grid-layout
+layout:
+  grid-template-columns: 1fr 1fr 1fr
+  grid-template-areas: '"live tables1 tables2" "live tables1 tables2"'
+  mediaquery:
+    (max-width: 1200px):
+      grid-template-columns: 1fr 1fr
+      grid-template-areas: '"live tables1" "live tables2"'
+    (max-width: 800px):
+      grid-template-columns: 1fr
+      grid-template-areas: '"live" "tables1" "tables2"'
+
+cards:
+  # ── Left column: Live match cards + today's scoreboard ───────────────────────
+  - type: vertical-stack
+    view_layout:
+      grid-area: live
+    cards:
+      - type: markdown
+        content: |
+          ## 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Live Matches
+          *Cards show the next/current match for each nation. Tap for details.*
+        card_mod:
+          style: "ha-card { background: none; box-shadow: none; }"
+
+      - type: custom:teamtracker-card
+        entity: sensor.england_wc
+        card_mod:
+          style: "ha-card { font-size: 85%; } :host { zoom: 0.85; }"
+
+      - type: custom:teamtracker-card
+        entity: sensor.spain_wc
+        card_mod:
+          style: "ha-card { font-size: 85%; } :host { zoom: 0.85; }"
+
+      - type: custom:teamtracker-card
+        entity: sensor.france_wc
+        card_mod:
+          style: "ha-card { font-size: 85%; } :host { zoom: 0.85; }"
+
+      - type: custom:teamtracker-card
+        entity: sensor.germany_wc
+        card_mod:
+          style: "ha-card { font-size: 85%; } :host { zoom: 0.85; }"
+
+      - type: custom:teamtracker-card
+        entity: sensor.portugal_wc
+        card_mod:
+          style: "ha-card { font-size: 85%; } :host { zoom: 0.85; }"
+
+      - type: custom:teamtracker-card
+        entity: sensor.netherlands_wc
+        card_mod:
+          style: "ha-card { font-size: 85%; } :host { zoom: 0.85; }"
+
+      - type: markdown
+        content: "## ⚽ Today's Matches"
+        card_mod:
+          style: "ha-card { background: none; box-shadow: none; margin-top: 8px; }"
+
+      - type: markdown
+        content: |
+          {% set events = state_attr('sensor.wc_scoreboard', 'events') %}
+          {% if not events or events | count == 0 %}
+          *No matches today. Tournament starts 11 June 2026.*
+          {% else %}
+          {% for e in events %}
+          {% set comp = e.competitions[0] %}
+          {% set home = comp.competitors | selectattr('homeAway', 'equalto', 'home') | first %}
+          {% set away = comp.competitors | selectattr('homeAway', 'equalto', 'away') | first %}
+          **{{ home.team.abbreviation }} {{ home.score }} – {{ away.score }} {{ away.team.abbreviation }}** · {{ e.status.type.shortDetail }}
+          {% endfor %}
+          {% endif %}
+
+  # ── Middle column: Group tables A–F ─────────────────────────────────────────
+  - type: vertical-stack
+    view_layout:
+      grid-area: tables1
+    cards:
+      - type: markdown
+        content: "## 📊 Group Tables (A–F)"
+        card_mod:
+          style: "ha-card { background: none; box-shadow: none; }"
+
+      - type: markdown
+        content: |
+          {% set groups = state_attr('sensor.wc_standings', 'children') %}
+          {% if not groups %}
+          *Standings will load after HA restarts — sensor needs to initialise.*
+          {% else %}
+          {% for grp in groups[:6] %}
+          **{{ grp.name }}**
+
+          | Team | P | W | D | L | GD | Pts |
+          |------|:-:|:-:|:-:|:-:|:--:|:---:|
+          {% for e in grp.standings.entries %}
+          {% set s = namespace(gp=0,w=0,d=0,l=0,gd=0,pts=0) %}
+          {% for st in e.stats %}{% if st.name=='gamesPlayed' %}{% set s.gp=st.displayValue %}{% endif %}{% if st.name=='wins' %}{% set s.w=st.displayValue %}{% endif %}{% if st.name=='ties' %}{% set s.d=st.displayValue %}{% endif %}{% if st.name=='losses' %}{% set s.l=st.displayValue %}{% endif %}{% if st.name=='pointDifferential' %}{% set s.gd=st.displayValue %}{% endif %}{% if st.name=='points' %}{% set s.pts=st.displayValue %}{% endif %}{% endfor %}
+          | {{ e.team.abbreviation }} | {{ s.gp }} | {{ s.w }} | {{ s.d }} | {{ s.l }} | {{ s.gd }} | **{{ s.pts }}** |
+          {% endfor %}
+          {% endfor %}
+          {% endif %}
+
+  # ── Right column: Group tables G–L ──────────────────────────────────────────
+  - type: vertical-stack
+    view_layout:
+      grid-area: tables2
+    cards:
+      - type: markdown
+        content: "## 📊 Group Tables (G–L)"
+        card_mod:
+          style: "ha-card { background: none; box-shadow: none; }"
+
+      - type: markdown
+        content: |
+          {% set groups = state_attr('sensor.wc_standings', 'children') %}
+          {% if not groups %}
+          *Loading...*
+          {% else %}
+          {% for grp in groups[6:12] %}
+          **{{ grp.name }}**
+
+          | Team | P | W | D | L | GD | Pts |
+          |------|:-:|:-:|:-:|:-:|:--:|:---:|
+          {% for e in grp.standings.entries %}
+          {% set s = namespace(gp=0,w=0,d=0,l=0,gd=0,pts=0) %}
+          {% for st in e.stats %}{% if st.name=='gamesPlayed' %}{% set s.gp=st.displayValue %}{% endif %}{% if st.name=='wins' %}{% set s.w=st.displayValue %}{% endif %}{% if st.name=='ties' %}{% set s.d=st.displayValue %}{% endif %}{% if st.name=='losses' %}{% set s.l=st.displayValue %}{% endif %}{% if st.name=='pointDifferential' %}{% set s.gd=st.displayValue %}{% endif %}{% if st.name=='points' %}{% set s.pts=st.displayValue %}{% endif %}{% endfor %}
+          | {{ e.team.abbreviation }} | {{ s.gp }} | {{ s.w }} | {{ s.d }} | {{ s.l }} | {{ s.gd }} | **{{ s.pts }}** |
+          {% endfor %}
+          {% endfor %}
+          {% endif %}
