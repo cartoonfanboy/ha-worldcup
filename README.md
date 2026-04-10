@@ -9,6 +9,8 @@ Tournament starts: **11 June 2026**
 ## Screenshot
 
 *Live match cards + group tables (A–L) across a 3-column responsive grid*
+<img width="1202" height="577" alt="image" src="https://github.com/user-attachments/assets/5dcb1a04-2da9-44dd-8522-7fd38758d89d" />
+
 
 ---
 
